@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "edge-playwright": {
+      "command": "node",
+      "args": ["C:/tools/edge-playwright-mcp/launch.mjs"],
+      "env": { "EDGE_MCP_PROXY": "direct" }
+    }
+  }
+}

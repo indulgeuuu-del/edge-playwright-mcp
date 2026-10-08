@@ -1,0 +1,29 @@
+{
+  "name": "edge-playwright-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Headless Edge MCP with a bounded persistent profile pool on Windows",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/indulgeuuu-del/edge-playwright-mcp.git"
+  },
+  "scripts": {
+    "postinstall": "node patch-core.mjs",
+    "patch:core": "node patch-core.mjs",
+    "check:core": "node patch-core.mjs --check",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node --test tests/browser.integration.mjs",
+    "start": "node launch.mjs"
+  },
+  "dependencies": {
+    "@playwright/mcp": "0.0.80"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1"
+  }
+}

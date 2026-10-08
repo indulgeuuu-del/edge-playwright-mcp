@@ -1,0 +1,14 @@
+node_modules/
+profiles/
+profile*/
+output/
+work/
+*.log
+*.env
+.env*
+*.db
+*.sqlite*
+*.lnk
+test-results/
+.DS_Store
+Thumbs.db
