@@ -10,9 +10,10 @@ import { resolveSettings } from './config.mjs';
 const root = path.dirname(fileURLToPath(import.meta.url));
 validatePatch(root);
 if (process.argv.length !== 2) throw new Error('Configure via EDGE_MCP_DATA_DIR and EDGE_MCP_PROXY; no CLI arguments are accepted.');
-const { dataRoot, launchOptions } = resolveSettings();
+const { dataRoot, launchOptions, syncMain, mainProfile } = resolveSettings();
 process.env.EDGE_MCP_DATA_DIR = dataRoot;
-// Never use or import the user's everyday browser profile.
+if (syncMain) process.env.EDGE_MCP_MAIN_PROFILE = mainProfile;
+// The automation browser always uses a leased copy, never the everyday profile.
 let ancestor = dataRoot;
 while (true) {
   if (fs.existsSync(ancestor) && fs.lstatSync(ancestor).isSymbolicLink()) throw new Error('Data path must not contain a symlink or junction.');
@@ -58,6 +59,16 @@ if (fs.existsSync(path.join(profile, 'Default'))) {
   if (result.failed.length) process.stderr.write('Some disposable caches were retained.\n');
 }
 const outputDir = path.join(slot, 'output');
+if (syncMain) {
+  const sync = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File',
+    path.join(root, 'refresh-main-profile.ps1'), '-NodePath', process.execPath,
+    '-SlotName', path.basename(slot), '-OwnerPid', String(process.pid), '-Nonce', nonce],
+    { encoding: 'utf8', windowsHide: true, timeout: 105000, maxBuffer: 1024 * 1024 });
+  if (sync.error || sync.status !== 0) throw new Error(`Main Edge sync failed: ${sync.error?.message || sync.stderr.trim()}`);
+  const result = JSON.parse(sync.stdout);
+  if (!['ready', 'main-edge-running'].includes(result.status)) throw new Error('Unexpected profile sync result.');
+  fs.writeFileSync(path.join(slot, 'sync-status.json'), JSON.stringify(result, null, 2));
+}
 fs.mkdirSync(outputDir, { recursive: true });
 const config = { browser: { browserName: 'chromium', isolated: false, userDataDir: profile,
   launchOptions, contextOptions: { viewport: { width: 1280, height: 900 } } },

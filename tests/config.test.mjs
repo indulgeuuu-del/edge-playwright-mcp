@@ -2,6 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveSettings } from '../config.mjs';
 
+test('main profile synchronization is opt-in and rejects overlapping directories', { skip: process.platform !== 'win32' }, () => {
+  assert.equal(resolveSettings({}).syncMain, false);
+  assert.equal(resolveSettings({ EDGE_MCP_SYNC_MAIN: '1' }).syncMain, true);
+  assert.throws(() => resolveSettings({ EDGE_MCP_SYNC_MAIN: 'yes' }), /0 or 1/);
+  for (const source of ['C:/fixture', 'C:/fixture/data', 'C:/fixture/data/source']) {
+    assert.throws(() => resolveSettings({ EDGE_MCP_SYNC_MAIN: '1', EDGE_MCP_DATA_DIR: 'C:/fixture/data', EDGE_MCP_MAIN_PROFILE: source }), /overlap/);
+  }
+});
+
 test('settings are Windows-only and keep browser sandbox/headless enabled', () => {
   if (process.platform !== 'win32') { assert.throws(() => resolveSettings({}), /Windows only/); return; }
   const { launchOptions } = resolveSettings({});

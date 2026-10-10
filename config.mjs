@@ -17,5 +17,12 @@ export function resolveSettings(env = process.env) {
   const launchOptions = { channel: 'msedge', headless: true, chromiumSandbox: true,
     args: ['--profile-directory=Default', ...(selection === 'direct' ? ['--no-proxy-server'] : [])] };
   if (proxy) launchOptions.proxy = proxy;
-  return { dataRoot, launchOptions };
+  if (env.EDGE_MCP_SYNC_MAIN && !['0', '1'].includes(env.EDGE_MCP_SYNC_MAIN)) throw new Error('EDGE_MCP_SYNC_MAIN must be 0 or 1.');
+  const syncMain = env.EDGE_MCP_SYNC_MAIN === '1';
+  const mainProfile = path.resolve(env.EDGE_MCP_MAIN_PROFILE || path.join(env.LOCALAPPDATA || os.homedir(), 'Microsoft', 'Edge', 'User Data'));
+  if (syncMain) {
+    const overlaps = (a, b) => a.toLowerCase() === b.toLowerCase() || a.toLowerCase().startsWith(b.toLowerCase() + path.sep);
+    if (overlaps(mainProfile, dataRoot) || overlaps(dataRoot, mainProfile)) throw new Error('Main Edge source and MCP data must not overlap.');
+  }
+  return { dataRoot, launchOptions, syncMain, mainProfile };
 }
